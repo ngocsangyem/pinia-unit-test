@@ -1,81 +1,71 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div id="app">
+    <h1>Hello Pinia 🍍!</h1>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
+    <h2>Logged in as {{ $user.name }}</h2>
 
-  <main>
-    <TheWelcome />
-  </main>
+    <form @submit.prevent="addItemToCart">
+      <input type="text" v-model="itemName" />
+      <button>Add</button>
+    </form>
+
+    <form @submit.prevent="buy">
+      <ul>
+        <li v-for="item in $cart.items" :key="item.name">
+          {{ item.name }} ({{ item.amount }})
+          <button @click="$cart.removeItem(item.name)" type="button">X</button>
+        </li>
+      </ul>
+
+      <button :disabled="!$user.name">Buy</button>
+      <button :disabled="!$cart.items.length" @click="clearCart" type="button">
+        Clear the cart
+      </button>
+    </form>
+  </div>
 </template>
 
+<script lang="ts" setup>
+import { ref } from "vue";
+import { useUserStore } from "./stores/user";
+import { useCartStore } from "./stores/cart";
+
+const $user = useUserStore();
+const $cart = useCartStore();
+
+const itemName = ref("");
+
+function addItemToCart() {
+  if (!itemName.value) return;
+  $cart.addItem(itemName.value);
+  itemName.value = "";
+}
+
+function clearCart() {
+  $cart.rawItems = [];
+}
+
+async function buy() {
+  const n = await $cart.purchaseItems();
+
+  console.log(`Bought ${n} items`);
+
+  $cart.rawItems = [];
+}
+</script>
+
 <style>
-@import './assets/base.css';
-
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-
-  font-weight: normal;
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
+  padding: 1rem 2rem;
 }
 
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
-
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+footer {
+  font-size: 0.75rem;
+  text-align: right;
+  color: darkgray;
 }
 </style>
